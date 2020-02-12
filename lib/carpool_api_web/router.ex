@@ -16,6 +16,7 @@ defmodule CarpoolApiWeb.Router do
   scope "/", CarpoolApiWeb do
     pipe_through :browser
 
-    get "/", CarpoolController, :index
+    get "/status", CarpoolController, :get_status
+    put "/cars", CarpoolController, :put_cars
   end
 end
