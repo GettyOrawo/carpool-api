@@ -1,7 +1,11 @@
 defmodule CarpoolApi.Cache do
+  @moduledoc """
+  Creates a Genserver forin memoiry Cache using Erlang's :ets
+  """
   use GenServer
 
   #client
+
   def start_link do
     GenServer.start_link(__MODULE__, %{}, name: CarpoolCache)
   end
@@ -11,19 +15,28 @@ defmodule CarpoolApi.Cache do
     {:ok, state}
   end
 
+  @doc """
+  deletes all records from :cars_cache table
+  """
   def delete_all do
     GenServer.cast(CarpoolCache, :delete_all)
   end
 
+  @doc """
+  Inserts records into cache or updates for duplicate keys
+  """
   def put_cars(key, cars) do
     GenServer.cast(CarpoolCache, {:put, key, cars})
   end
 
+  @doc """
+  Gets records from cache using key
+  """
   def get(key) do
     GenServer.call(CarpoolCache, {:get, key})
   end
 
-  #server
+  ##server
 
   def handle_cast(:delete_all, state) do
     :ets.delete_all_objects(:cars_cache)
