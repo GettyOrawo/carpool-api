@@ -12,21 +12,23 @@ defmodule CarpoolApi.Cache do
 
   def init(state) do
     :ets.new(:cars_cache, [:set, :public, :named_table])
+    :ets.new(:group_cache, [:set, :public, :named_table])
     {:ok, state}
   end
 
-  @doc """
-  deletes all records from :cars_cache table
-  """
-  def delete_all do
-    GenServer.cast(CarpoolCache, :delete_all)
-  end
 
   @doc """
-  Inserts records into cache or updates for duplicate keys
+  Inserts cars records into cache or updates for duplicate keys
   """
   def put_cars(key, cars) do
-    GenServer.cast(CarpoolCache, {:put, key, cars})
+    GenServer.cast(CarpoolCache, {:put_cars, key, cars})
+  end
+
+   @doc """
+  Inserts group records into cache
+  """
+  def add_group(key, group) do
+    GenServer.cast(CarpoolCache, {:add_group, key, group})
   end
 
   @doc """
@@ -38,13 +40,13 @@ defmodule CarpoolApi.Cache do
 
   ##server
 
-  def handle_cast(:delete_all, state) do
-    :ets.delete_all_objects(:cars_cache)
+  def handle_cast({:put_cars, key, cars}, state) do
+    :ets.insert(:cars_cache, {key, cars})
     {:noreply, state}
   end
 
-  def handle_cast({:put, key, cars}, state) do
-    :ets.insert(:cars_cache, {key, cars})
+  def handle_cast({:add_group, key, group}, state) do
+    :ets.insert_new(:group_cache, {key, group})
     {:noreply, state}
   end
 
