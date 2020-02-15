@@ -68,7 +68,7 @@ defmodule CarpoolApiWeb.CarpoolController do
   Locates the car by which the given group id is riding with
   """
   def locate(conn, %{"id" => group_id}) do
-    case CarpoolApi.find_car(group_id) do
+    case CarpoolApi.find_car(String.to_integer(group_id)) do
       "waiting" ->
         conn
         |> send_resp(204, "No Content")
@@ -80,7 +80,7 @@ defmodule CarpoolApiWeb.CarpoolController do
         |> send_resp(400, "Bad Request")
       boarded_car ->
         conn
-        |> send_resp(200, "OK", boarded_car)
+        |> send_resp(200, "OK")
     end
   end
 end

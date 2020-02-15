@@ -34,6 +34,13 @@ defmodule CarpoolApi.Cache do
   @doc """
   Deregisters group from cache
   """
+  def delete_group(group_id) do
+    GenServer.cast(CarpoolCache, {:delete_group, group_id})
+  end
+
+  @doc """
+  Deregisters group from cache
+  """
   def delete_all do
     GenServer.cast(CarpoolCache, {:delete_all})
   end
@@ -49,6 +56,11 @@ defmodule CarpoolApi.Cache do
 
   def handle_cast({:put_cars, key, cars}, state) do
     :ets.insert(:cars_cache, {key, cars})
+    {:noreply, state}
+  end
+
+  def handle_cast({:delete_group, group_id}, state) do
+    :ets.delete(:group_cache, group_id)
     {:noreply, state}
   end
 
@@ -69,7 +81,7 @@ defmodule CarpoolApi.Cache do
       [{_key, group}] -> group
       [] -> nil
     end
-    {:reply, groupingx`, state}
+    {:reply, grouping, state}
   end
 
 
