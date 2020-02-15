@@ -30,7 +30,7 @@ defmodule CarpoolApi do
     Enum.map(params, fn param -> 
       params = convert_keys_to_atoms(param)
 
-      case Map.has_key?(params, "id") and Map.has_key?(params, "seats") do
+      case Map.has_key?(params, :id) and Map.has_key?(params, :seats) do
         true -> 
           case Enum.count(params) == 2 and is_integer(params.seats) do
             true ->
@@ -52,11 +52,32 @@ defmodule CarpoolApi do
       true -> 
         case Enum.count(params) == 2 and is_integer(params.people) do
           true -> 
-            CarpoolApi.Cache.add_group(:group, params)
+            CarpoolApi.Cache.add_group(params.id, params)
           false -> false
         end
       false -> false
     end
+  end
+
+  @doc """
+  Validates incomming id formats before deregistering valid group
+  """
+  def validate_group_id_and_deregister(group_id) do
+        IO.inspect group_id, label: "**##**"
+
+    case is_integer(group_id) do
+      true ->
+        case record_exists?(:group_cache, group_id) do
+          nil -> "no record"
+          _group -> 
+            CarpoolApi.Cache.delete_group(group_id)
+        end
+      false -> false
+    end
+  end
+
+  def record_exists?(table, key) do
+    CarpoolApi.Cache.get(table, key)
   end
 
   @doc """
