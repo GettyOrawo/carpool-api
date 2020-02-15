@@ -31,15 +31,35 @@ defmodule CarpoolApiWeb.CarpoolController do
   end
 
   @doc """
-  add group of people to the cache
+  registers group of people to start journey
   """
   
   def put_groups(conn, params) do
-    IO.inspect CarpoolApi.validate_group_payload_format(params)
+    IO.inspect params, label: "###"
     case CarpoolApi.validate_group_payload_format(params) do
       :ok ->
         conn
         |> send_resp(200, "OK")
+      false ->
+        conn
+        |> send_resp(400, "Bad Request")
+    end
+  end
+
+  @doc """
+  deregisters group of people from journey
+  """
+
+  def dropoff(conn, %{"id" => group_id}) do
+
+    IO.inspect group_id, label: "****"
+    case CarpoolApi.validate_group_id_and_deregister(String.to_integer(group_id)) do
+      :ok ->
+        conn
+        |> send_resp(200, "OK")
+      "no record" ->
+        conn
+        |> send_resp(404, "Not Found")
       false ->
         conn
         |> send_resp(400, "Bad Request")
