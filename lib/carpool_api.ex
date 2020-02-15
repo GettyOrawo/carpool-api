@@ -34,6 +34,7 @@ defmodule CarpoolApi do
         true -> 
           case Enum.count(params) == 2 and is_integer(params.seats) do
             true ->
+              CarpoolApi.Cache.delete_all()
               CarpoolApi.Cache.put_cars(:cars, params)
             false -> false
           end
@@ -62,19 +63,40 @@ defmodule CarpoolApi do
   @doc """
   Validates incomming id formats before deregistering valid group
   """
-  def validate_group_id_and_deregister(group_id) do
-        IO.inspect group_id, label: "**##**"
-
-    case is_integer(group_id) do
-      true ->
-        case record_exists?(:group_cache, group_id) do
-          nil -> "no record"
-          _group -> 
-            CarpoolApi.Cache.delete_group(group_id)
-        end
-      false -> false
+  def validate_group_id_and_deregister(group_id), when is_integer(group_id) do
+    case record_exists?(:group_cache, group_id) do
+      nil -> "no record"
+      _group -> 
+        CarpoolApi.Cache.delete_group(group_id)
     end
   end
+
+    def validate_group_id_and_deregister(_group_id) do
+      false
+    end
+  end
+
+  @doc """
+  Tries to find a car for the incomming group
+  """
+  def find_car(group, cars), when record_exists?(table, key) and is_integer(group.id) do
+    case Enum.filter(cars, fn car -> car.seats >= group.people) do
+      [] -> "waiting"
+      vehicle ->  Enum.min_by(vehicle, fn v -> v.seats end)
+    end
+  end
+
+  def find_car(group, cars), when is_integer(group.id) do
+    "no record"
+  end
+
+  def find_car(group, cars) do
+    "invalid payload"
+  end
+
+  @doc """
+  Checks if record exists in the cache
+  """
 
   def record_exists?(table, key) do
     CarpoolApi.Cache.get(table, key)

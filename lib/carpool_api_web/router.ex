@@ -16,5 +16,6 @@ defmodule CarpoolApiWeb.Router do
     put "/cars", CarpoolController, :put_cars
     post "/journey", CarpoolController, :put_groups
     post "/dropoff", CarpoolController, :dropoff
+    post, "/locate", CarpoolController, :locate
   end
 end
