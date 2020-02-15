@@ -51,8 +51,6 @@ defmodule CarpoolApiWeb.CarpoolController do
   """
 
   def dropoff(conn, %{"id" => group_id}) do
-
-    IO.inspect group_id, label: "****"
     case CarpoolApi.validate_group_id_and_deregister(String.to_integer(group_id)) do
       :ok ->
         conn
@@ -63,6 +61,26 @@ defmodule CarpoolApiWeb.CarpoolController do
       false ->
         conn
         |> send_resp(400, "Bad Request")
+    end
+  end
+
+  @doc """
+  Locates the car by which the given group id is riding with
+  """
+  def locate(conn, %{"id" => group_id}) do
+    case CarpoolApi.find_car(group_id) do
+      "waiting" ->
+        conn
+        |> send_resp(204, "No Content")
+      "no record" ->
+        conn
+        |> send_resp(404, "Not Found")
+      "invalid payload" ->
+        conn
+        |> send_resp(400, "Bad Request")
+      boarded_car ->
+        conn
+        |> send_resp(200, "OK", boarded_car)
     end
   end
 end
