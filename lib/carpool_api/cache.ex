@@ -83,8 +83,4 @@ defmodule CarpoolApi.Cache do
     end
     {:reply, grouping, state}
   end
-
-
-
-
 end

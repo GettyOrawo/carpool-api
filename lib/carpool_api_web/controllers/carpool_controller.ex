@@ -20,11 +20,11 @@ defmodule CarpoolApiWeb.CarpoolController do
   """
   
   def put_cars(conn, %{"_json" => params}) do
-    case CarpoolApi.validate_cars_payload_format(params) do
-      true -> 
+    case CarpoolApi.valid_payload?(params) do
+      "valid_payload" -> 
         conn
         |> send_resp(200, "OK")
-      false ->
+      "invalid_payload" ->
         conn
         |> send_resp(400, "Bad Request")
     end
@@ -35,12 +35,12 @@ defmodule CarpoolApiWeb.CarpoolController do
   """
   
   def put_groups(conn, params) do
-    IO.inspect params, label: "###"
-    case CarpoolApi.validate_group_payload_format(params) do
+    case CarpoolApi.save_group_payload(params) do
       :ok ->
         conn
         |> send_resp(200, "OK")
-      false ->
+        
+      "invalid payload" ->
         conn
         |> send_resp(400, "Bad Request")
     end
@@ -58,7 +58,7 @@ defmodule CarpoolApiWeb.CarpoolController do
       "no record" ->
         conn
         |> send_resp(404, "Not Found")
-      false ->
+      "invalid payload" ->
         conn
         |> send_resp(400, "Bad Request")
     end
@@ -79,8 +79,9 @@ defmodule CarpoolApiWeb.CarpoolController do
         conn
         |> send_resp(400, "Bad Request")
       boarded_car ->
+        {:ok, car} = Jason.encode boarded_car
         conn
-        |> send_resp(200, "OK")
+        |> resp(200, car)
     end
   end
 end

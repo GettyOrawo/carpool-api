@@ -12,53 +12,56 @@ defmodule CarpoolApi do
   @doc """
   Validates all payload formats for cars before save
   """
-  def validate_cars_payload_format(params) do
+  def valid_payload?(params) do
 
-    list = filter_by_keys_and_length(params)
+    list = insert_valid_payload(params)
 
     case Enum.member?(list, false) do
-      true -> false
-      false -> true
+      true -> "invalid_payload"
+      false -> "valid_payload"
     end
   end
 
   @doc """
-  Filters the incoming params by availability of the "id" and "seats" keys 
-  and that no other keys are passed in
+  saves cars list if the payload is valid
   """
 
-  def filter_by_keys_and_length(cars_list) do
+  def insert_valid_payload(cars_list) do
 
     Enum.map(cars_list, fn vehicle -> 
+
       car_map = convert_keys_to_atoms(vehicle)
 
-      case Map.has_key?(car_map, :id) and Map.has_key?(car_map, :seats) do
+      case validate_payload_format(car_map, :seats) do
         true -> 
-          case Enum.count(car_map) == 2 and is_integer(car_map.seats) do
-            true ->
-              Cache.delete_all()
-              Cache.put_cars(:cars, cars_list)
-            false -> false
-          end
+          Cache.delete_all()
+          Cache.put_cars(:cars, cars_list)
         false -> false
       end
     end)
   end
 
   @doc """
-  Validates all payload formats for groups before save
+  Validates all payload formats for groups and cars
   """
-  def validate_group_payload_format(param) do
+
+  def validate_payload_format(map_to_validate, key) do
+    required_keys = [:id, key]
+
+    required_keys
+    |> Enum.all?(&(Map.has_key?(map_to_validate, &1)) and 
+      is_integer(Map.get(map_to_validate, &1)))
+  end
+
+  @doc """
+  Saves groups with valid payload
+  """
+  def save_group_payload(param) do
     params = convert_keys_to_atoms(param)
 
-    case Map.has_key?(params, :id) and Map.has_key?(params, :people) do
-      true -> 
-        case Enum.count(params) == 2 and is_integer(params.people) do
-          true -> 
-            Cache.add_group(params.id, params)
-          false -> false
-        end
-      false -> false
+    case validate_payload_format(params, :people) do
+      true -> Cache.add_group(params.id, params)
+      false -> "invalid payload"
     end
   end
 
@@ -68,34 +71,43 @@ defmodule CarpoolApi do
   def validate_group_id_and_deregister(group_id) when is_integer(group_id) do
     case record_exists?(:group_cache, group_id) do
       nil -> "no record"
-      _group -> 
+      _group ->
         Cache.delete_group(group_id)
     end
   end
 
   def validate_group_id_and_deregister(_group_id) do
-    false
+    "invalid payload"
   end
 
   @doc """
   Tries to find a car for the incomming group
   """
   def find_car(group_id) when is_integer(group_id) do
-    cars = get_all_cars()
-
+    
 
     case record_exists?(:group_cache, group_id) do
       nil -> "no record"
       group -> 
-        case Enum.filter(cars, fn car -> car.seats >= group.people end) do
+        case check_cars_available_for_group(group) do
           [] -> "waiting"
           vehicle ->  Enum.min_by(vehicle, fn v -> v.seats end) 
         end
     end  
   end
 
-  def find_car(group_id) do
+
+  def find_car(_group_id) do
     "invalid payload"
+  end
+
+  @doc """
+  Checks if there is an avaiable car for a group
+  """
+
+  def check_cars_available_for_group(group) do
+    cars = get_all_cars()
+    Enum.filter(cars, fn car -> car.seats >= group.people end)
   end
 
   @doc """
@@ -106,10 +118,15 @@ defmodule CarpoolApi do
     Cache.get(table, key)
   end
 
+  @doc """
+  gets all cars from the cache
+  """
+
   def get_all_cars do
     Cache.get(:cars_cache, :cars)
     |> Enum.map(fn car -> convert_keys_to_atoms(car) end)
   end
+
   @doc """
   Converts map with string keys to atom keys
   """
