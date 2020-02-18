@@ -68,38 +68,43 @@ defmodule CarpoolApi do
   @doc """
   Validates incomming id formats before deregistering valid group
   """
-  def validate_group_id_and_deregister(group_id) when is_integer(group_id) do
-    case record_exists?(:group_cache, group_id) do
+  def validate_group_id_and_deregister(%{"id" => group_id}) do
+
+    case record_exists?(:group_cache, String.to_integer(group_id)) do
       nil -> "no record"
       _group ->
         Cache.delete_group(group_id)
     end
   end
 
-  def validate_group_id_and_deregister(_group_id) do
+  def validate_group_id_and_deregister(_group) do
     "invalid payload"
   end
 
   @doc """
   Tries to find a car for the incomming group
   """
-  def find_car(group_id) when is_integer(group_id) do
+  def find_car(%{"id" => id}) do
     
 
-    case record_exists?(:group_cache, group_id) do
+    case record_exists?(:group_cache, id) do
       nil -> "no record"
-      group -> 
-        case check_cars_available_for_group(group) do
-          [] -> "waiting"
-          vehicle ->  Enum.min_by(vehicle, fn v -> v.seats end) 
-        end
+      group -> check_available(group)   
     end  
   end
-
 
   def find_car(_group_id) do
     "invalid payload"
   end
+
+
+  defp check_available(group) do
+    case check_cars_available_for_group(group) do
+      [] -> "waiting"
+      vehicle ->  Enum.min_by(vehicle, fn v -> v.seats end) 
+    end
+  end
+
 
   @doc """
   Checks if there is an avaiable car for a group
