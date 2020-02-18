@@ -50,8 +50,8 @@ defmodule CarpoolApiWeb.CarpoolController do
   deregisters group of people from journey
   """
 
-  def dropoff(conn, %{"id" => group_id}) do
-    case CarpoolApi.validate_group_id_and_deregister(String.to_integer(group_id)) do
+  def dropoff(conn, params) do
+    case CarpoolApi.validate_group_id_and_deregister(params) do
       :ok ->
         conn
         |> send_resp(200, "OK")
@@ -67,8 +67,8 @@ defmodule CarpoolApiWeb.CarpoolController do
   @doc """
   Locates the car by which the given group id is riding with
   """
-  def locate(conn, %{"id" => group_id}) do
-    case CarpoolApi.find_car(String.to_integer(group_id)) do
+  def locate(conn, params) do
+    case CarpoolApi.find_car(params) do
       "waiting" ->
         conn
         |> send_resp(204, "No Content")
