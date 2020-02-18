@@ -12,10 +12,10 @@ defmodule CarpoolApiWeb.Router do
   scope "/", CarpoolApiWeb do
     pipe_through :api
 
-    get "/status", CarpoolController, :get_status
-    put "/cars", CarpoolController, :put_cars
-    post "/journey", CarpoolController, :put_groups
-    post "/dropoff", CarpoolController, :dropoff
-    post "/locate", CarpoolController, :locate
+    get "/status", CarsController, :new
+    put "/cars", CarsController, :create
+    post "/journey", GroupsController, :create
+    post "/dropoff", GroupsController, :delete
+    post "/locate", CarsController, :show
   end
 end
