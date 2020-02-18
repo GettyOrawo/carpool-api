@@ -69,11 +69,10 @@ defmodule CarpoolApi do
   Validates incomming id formats before deregistering valid group
   """
   def validate_group_id_and_deregister(%{"id" => group_id}) do
-
     case record_exists?(:group_cache, String.to_integer(group_id)) do
       nil -> "no record"
-      _group ->
-        Cache.delete_group(group_id)
+      group ->
+        Cache.delete_group(group.id)
     end
   end
 
@@ -87,7 +86,7 @@ defmodule CarpoolApi do
   def find_car(%{"id" => id}) do
     
 
-    case record_exists?(:group_cache, id) do
+    case record_exists?(:group_cache, String.to_integer(id)) do
       nil -> "no record"
       group -> check_available(group)   
     end  

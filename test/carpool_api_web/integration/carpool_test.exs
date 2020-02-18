@@ -41,53 +41,68 @@ defmodule CarpoolApiWeb.CarpoolTest do
     ]
   end
   
-
-  test "starts up application successfully" do
-    conn = get(build_conn(), "/status")
-    assert response(conn, 200) =~ "OK"
+  describe "/status" do
+    test "starts up application successfully" do
+      conn = get(build_conn(), "/status")
+      assert response(conn, 200) =~ "OK"
+    end
   end
 
-  test "saves group successfully", %{valid_group: valid_group} do
-    conn = post(build_conn(), "/journey", valid_group)
-    assert response(conn, 200) =~ "OK"
+  describe "/journey" do
+    test "saves group successfully", %{valid_group: valid_group} do
+      conn = post(build_conn(), "/journey", valid_group)
+      assert response(conn, 200) =~ "OK"
+    end
+
+    test "refutes invalid group payload", %{invalid_group: invalid_group} do
+      conn = post(build_conn(), "/journey", invalid_group)
+      assert response(conn, 400) =~ "Bad Request"
+    end
   end
 
-  test "refutes invalid group payload", %{invalid_group: invalid_group} do
-    conn = post(build_conn(), "/journey", invalid_group)
-    assert response(conn, 400) =~ "Bad Request"
+  describe "/cars" do
+    test "updates cars successfully", %{valid_cars: valid_cars} do
+      conn = put(build_conn(), "/cars", valid_cars)
+      assert response(conn, 200) =~ "OK"
+    end
+
+    test "refutes bad cars payload", %{invalid_cars: invalid_cars} do
+      conn = put(build_conn(), "/cars", invalid_cars)
+      assert response(conn, 400) =~ "Bad Request"
+    end
   end
 
-  test "updates cars successfully", %{valid_cars: valid_cars} do
-    conn = put(build_conn(), "/cars", valid_cars)
-    assert response(conn, 200) =~ "OK"
+  describe "/dropoff" do
+    test "existing people can be dropped off", %{group_id: id} do  
+      assert Cache.get(:group_cache, 3) == %{id: 3, people: 3}
+      conn = post(build_conn(), "/dropoff", id)
+      assert response(conn, 200) =~ "OK"
+      assert Cache.get(:group_cache, 3) == nil
+    end
+
+    test "dropping off non-existent group returns 404" do
+      conn = post(build_conn(), "/dropoff", %{"id" => "22"})
+      assert response(conn, 404) =~ "Not Found"
+    end
   end
 
-  test "refutes bad cars payload", %{invalid_cars: invalid_cars} do
-    conn = put(build_conn(), "/cars", invalid_cars)
-    assert response(conn, 400) =~ "Bad Request"
-  end
+  describe "/locate" do
+    test "confirm valid group can be assigned a car", %{group_id: id} do
+      {:ok, car}  = Jason.encode(%{"id" => 2, "seats" => 4})
+      conn = post(build_conn(), "/locate", id)
+      assert response(conn, 200) =~ car
+    end
 
-  test "existing people can be dropped off", %{group_id: id} do
-    
-    assert Cache.get(:group_cache, 3) == %{id: 3, people: 3}
-    conn = post(build_conn(), "/dropoff", id)
-    assert response(conn, 200) =~ "OK"
-    assert Cache.get(:group_cache, 3) == nil
-  end
+    test "locating non-existent group returns 404" do
+      conn = post(build_conn(), "/locate", %{"id" => "277"})
+      assert response(conn, 404) =~ "Not Found"
+    end
 
-  test "dropping off non-existent group returns 404" do
-    conn = post(build_conn(), "/dropoff", %{"id" => "22"})
-    assert response(conn, 404) =~ "Not Found"
-  end
-
-  test "confirm valid group can be assigned a car", %{group_id: id} do
-    {:ok, car}  = Jason.encode(%{"id" => 2, "seats" => 4})
-    conn = post(build_conn(), "/locate", id)
-    assert response(conn, 200) =~ car
-  end
-
-  test "locating non-existent group returns 404" do
-    conn = post(build_conn(), "/locate", %{"id" => "277"})
-    assert response(conn, 404) =~ "Not Found"
+    test "invalid group id payload returns bad request" do
+      conn = post(build_conn(), "/locate", %{"identity" => "277"})
+      assert response(conn, 400) =~ "Bad Request"
+      conn = post(build_conn(), "/dropoff", %{"idea" => "greet"})
+      assert response(conn, 400) =~ "Bad Request"
+    end
   end
 end
