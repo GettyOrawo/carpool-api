@@ -9,14 +9,13 @@ defmodule CarpoolApiWeb.Router do
     plug :accepts, ["html"]
   end
 
-  scope "/api", CarpoolApiWeb do
-    pipe_through :api
-  end
-
   scope "/", CarpoolApiWeb do
-    pipe_through :browser
+    pipe_through :api
 
-    get "/status", CarpoolController, :get_status
-    put "/cars", CarpoolController, :put_cars
+    get "/status", CarsController, :new
+    put "/cars", CarsController, :create
+    post "/journey", GroupsController, :create
+    post "/dropoff", GroupsController, :delete
+    post "/locate", CarsController, :show
   end
 end
